@@ -10,12 +10,14 @@ import argparse
 from pytorch_lightning.loggers import TensorBoardLogger
 from model import Model
 from dataset import DataModule, custom_collate
-from hparams import cfg
-
 from torch.utils.data import DataLoader, random_split
+
+from utils import load_setting
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--setting", "-s", type=str, default="settings/debug.yaml",
+                        help="Experiment settings")
     parser.add_argument("--version", "-v", type=int, default=0,
                         help="Train experiment version")
     parser.add_argument("--max_epochs", "-me", type=int, default=10,
@@ -29,7 +31,11 @@ if __name__ == "__main__":
     parser.add_argument("--split_data", "-sd", nargs='+', type=float, default=None,
                         help="Split total data into train and validate data (train, val)")
     args = parser.parse_args()
+    
+    # setting
+    cfg = load_setting(args.setting)
     cfg.update(vars(args))
+    print("setting:", cfg)
 
     if cfg.split_data:
         train_set, val_set = random_split(DataModule(cfg.total_data_path),
