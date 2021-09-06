@@ -1,6 +1,8 @@
 import torch
 import pytorch_lightning as pl
 
+import utils
+
 class Model(pl.LightningModule):
     def __init__(self, cfg):
         super(Model, self).__init__()
@@ -20,11 +22,19 @@ class Model(pl.LightningModule):
         return out
 
     def configure_optimizers(self):
-        """
-        set optimizer and scheduler
-        """
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.cfg.lr) 
-        return optimizer
+        optimizer = getattr(torch.optim, self.cfg.optimizer)
+        optimizer = optimizer(self.parameters(), lr=self.cfg.lr)
+
+        try:
+            scheduler = getattr(utils, self.cfg.scheduler)
+        except ModuleNotFoundError:
+            scheduler = getattr(torch.optim.lr_scheduler, self.cfg.scheduler)
+
+        scheduler_cfg = getattr(self.cfg, self.cfg.scheduler)
+        scheduler = {'scheduler': scheduler(optimizer, **scheduler_cfg),
+            'interval': self.cfg.scheduler_interval,
+            'name': self.cfg.scheduler}
+        return [optimizer], [scheduler]
 
     def training_step(self, batch, batch_nb):
         inp, labels = batch
@@ -44,6 +54,7 @@ class Model(pl.LightningModule):
         acc = torch.all(labels==pred, dim=1).sum() / inp.size(0)
         self.log('val_acc', acc)
         self.log('val_loss', loss)
+        # self.logger.log_text("title", "text log", self.global_step)
         return {'val_loss':loss, 'acc': acc}
 
     def validation_epoch_end(self, outputs):
