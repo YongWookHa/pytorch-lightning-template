@@ -25,13 +25,15 @@ class Model(pl.LightningModule):
         optimizer = getattr(torch.optim, self.cfg.optimizer)
         optimizer = optimizer(self.parameters(), lr=self.cfg.lr)
 
-        if hasattr(torch.optim.lr_scheduler, self.cfg.scheduler):
+        if not self.cfg.scheduler:
+            return optimizer
+        elif hasattr(torch.optim.lr_scheduler, self.cfg.scheduler):
             scheduler = getattr(torch.optim.lr_scheduler, self.cfg.scheduler)
         elif hasattr(utils, self.cfg.scheduler):
             scheduler = getattr(utils, self.cfg.scheduler)
         else:
             raise ModuleNotFoundError
-
+        
         scheduler = {
             'scheduler': scheduler(optimizer, **self.cfg.scheduler_param),
             'interval': self.cfg.scheduler_interval,
