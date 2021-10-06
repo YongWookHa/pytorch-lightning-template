@@ -25,15 +25,18 @@ class Model(pl.LightningModule):
         optimizer = getattr(torch.optim, self.cfg.optimizer)
         optimizer = optimizer(self.parameters(), lr=self.cfg.lr)
 
-        try:
-            scheduler = getattr(utils, self.cfg.scheduler)
-        except ModuleNotFoundError:
+        if hasattr(torch.optim.lr_scheduler, self.cfg.scheduler):
             scheduler = getattr(torch.optim.lr_scheduler, self.cfg.scheduler)
+        elif hasattr(utils, self.cfg.scheduler):
+            scheduler = getattr(utils, self.cfg.scheduler)
+        else:
+            raise ModuleNotFoundError
 
-        scheduler_cfg = getattr(self.cfg, self.cfg.scheduler)
-        scheduler = {'scheduler': scheduler(optimizer, **scheduler_cfg),
+        scheduler = {
+            'scheduler': scheduler(optimizer, **self.cfg.scheduler_param),
             'interval': self.cfg.scheduler_interval,
-            'name': self.cfg.scheduler}
+            'name': self.cfg.scheduler
+            }
         return [optimizer], [scheduler]
 
     def training_step(self, batch, batch_nb):

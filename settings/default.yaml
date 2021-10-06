@@ -8,16 +8,19 @@ name: "test"
 
 # Training parameters
 epochs: 60
-batchsize: 128
+batch_size: 128
 
 # Optimizer configurations
 optimizer: "AdamW"
-scheduler: "CosineAnnealingWarmUpRestarts"
 lr: 0.0
-T_0: 20
-T_mult: 2.0
-eta_max: 0.003
-T_up: 1
-gamma: 0.5
+scheduler: "CustomCosineAnnealingWarmUpRestarts"
+scheduler_interval: "epoch"  # or "step"
+scheduler_param:
+  first_cycle_steps: 20  # epoch
+  cycle_mult: 2
+  max_lr: 0.003
+  min_lr: 0.0000001
+  warmup_steps: 1
+  gamma: 0.5
 
 # Parameters for model architectures
