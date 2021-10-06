@@ -16,20 +16,14 @@ from utils import load_setting
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--setting", "-s", type=str, default="settings/debug.yaml",
+    parser.add_argument("--setting", "-s", type=str, default="settings/default.yaml",
                         help="Experiment settings")
     parser.add_argument("--version", "-v", type=int, default=0,
                         help="Train experiment version")
-    parser.add_argument("--max_epochs", "-me", type=int, default=10,
-                        help="Max epochs for training")
     parser.add_argument("--num_workers", "-nw", type=int, default=0,
                         help="Number of workers for dataloader")
-    parser.add_argument("--batch_size", "-bs", type=int,
-                        help="Batch size for training and validate")
     parser.add_argument("--resume_train", "-rt", type=str, default="",
                         help="Resume train from certain checkpoint")
-    parser.add_argument("--split_data", "-sd", nargs='+', type=float, default=None,
-                        help="Split total data into train and validate data (train, val)")
     args = parser.parse_args()
     
     # setting
@@ -37,12 +31,8 @@ if __name__ == "__main__":
     cfg.update(vars(args))
     print("setting:", cfg)
 
-    if cfg.split_data:
-        train_set, val_set = random_split(DataModule(cfg.total_data_path),
-                                          tuple(cfg.split_data))
-    else:
-        train_set = DataModule(cfg.train_data_path)
-        val_set = DataModule(cfg.val_data_path)    
+    train_set = DataModule(cfg.train_data_path)
+    val_set = DataModule(cfg.val_data_path)    
 
     collate = custom_collate()
 
@@ -65,11 +55,13 @@ if __name__ == "__main__":
         save_top_k=3,
         mode="max",
     )
+    lr_callback = pl.callbacks.LearningRateMonitor(logging_interval='step')
 
-    trainer = pl.Trainer(gpus=torch.cuda.device_count(), max_epochs=cfg.max_epochs,
-                        logger=logger, num_sanity_val_steps=1, accelerator="ddp", 
-                        callbacks=[ckpt_callback, ], resume_from_checkpoint=cfg.resume_train)
+    device_cnt = torch.cuda.device_count()
+    trainer = pl.Trainer(gpus=device_cnt, max_epochs=cfg.epochs,
+                        logger=logger, num_sanity_val_steps=1,
+                        accelerator="ddp" if device_cnt > 1 else None, 
+                        callbacks=[ckpt_callback, lr_callback],
+                        resume_from_checkpoint=cfg.resume_train if cfg.resume_train else None)
 
     trainer.fit(model, train_dataloader=train_dataloader, val_dataloaders=valid_dataloader)
-
-    trainer = pl.Trainer()
