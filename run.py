@@ -1,7 +1,5 @@
 """
-im2latex pytorch lightning ported version
-
-model will be changed little bit more
+pytorch lightning template for model implementation
 """
 
 import torch
