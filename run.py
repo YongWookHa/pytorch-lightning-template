@@ -44,7 +44,8 @@ if __name__ == "__main__":
     if cfg.resume_train:
         model = model.load_from_checkpoint(cfg.resume_train)
 
-    logger = TensorBoardLogger("tb_logs", name="model", version=cfg.version)
+    logger = TensorBoardLogger("tb_logs", name="model", version=cfg.version,
+                               default_hp_metric=False)
     
     ckpt_callback = pl.callbacks.ModelCheckpoint(
         monitor="val_acc",
