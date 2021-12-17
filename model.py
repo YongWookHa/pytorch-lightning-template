@@ -33,11 +33,11 @@ class Model(pl.LightningModule):
             scheduler = getattr(utils, self.cfg.scheduler)
         else:
             raise ModuleNotFoundError
-        
+
         scheduler = {
             'scheduler': scheduler(optimizer, **self.cfg.scheduler_param),
             'interval': self.cfg.scheduler_interval,
-            'name': self.cfg.scheduler
+            'name': "learning_rate"
             }
         return [optimizer], [scheduler]
 
@@ -53,7 +53,7 @@ class Model(pl.LightningModule):
 
         logits = self(inp)
         loss = self.cal_loss(logits, labels)
-        
+
         pred = logits.argmax(1)
 
         acc = torch.all(labels==pred, dim=1).sum() / inp.size(0)
@@ -76,5 +76,5 @@ class Model(pl.LightningModule):
             [B, ]
         """
         loss = torch.nn.functional.cross_entropy(logits, targets)
-        
+
         return loss

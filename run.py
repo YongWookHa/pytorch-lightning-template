@@ -23,30 +23,30 @@ if __name__ == "__main__":
     parser.add_argument("--resume_train", "-rt", type=str, default="",
                         help="Resume train from certain checkpoint")
     args = parser.parse_args()
-    
+
     # setting
     cfg = load_setting(args.setting)
     cfg.update(vars(args))
     print("setting:", cfg)
 
     train_set = DataModule(cfg.train_data_path)
-    val_set = DataModule(cfg.val_data_path)    
+    val_set = DataModule(cfg.val_data_path)
 
     collate = custom_collate()
 
-    train_dataloader = DataLoader(train_set, batch_size=cfg.batch_size, 
+    train_dataloader = DataLoader(train_set, batch_size=cfg.batch_size,
                                   num_workers=cfg.num_workers, collate_fn=collate)
     valid_dataloader = DataLoader(val_set, batch_size=cfg.batch_size,
                                   num_workers=cfg.num_workers, collate_fn=collate)
 
     model = Model(cfg)
-    
+
     if cfg.resume_train:
         model = model.load_from_checkpoint(cfg.resume_train)
 
     logger = TensorBoardLogger("tb_logs", name="model", version=cfg.version,
                                default_hp_metric=False)
-    
+
     ckpt_callback = pl.callbacks.ModelCheckpoint(
         monitor="val_acc",
         dirpath=f"checkpoints/version_{cfg.version}",
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     device_cnt = torch.cuda.device_count()
     trainer = pl.Trainer(gpus=device_cnt, max_epochs=cfg.epochs,
                         logger=logger, num_sanity_val_steps=1,
-                        accelerator="ddp" if device_cnt > 1 else None, 
+                        accelerator="ddp" if device_cnt > 1 else None,
                         callbacks=[ckpt_callback, lr_callback],
                         resume_from_checkpoint=cfg.resume_train if cfg.resume_train else None)
 

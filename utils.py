@@ -43,7 +43,7 @@ class CustomCosineAnnealingWarmupRestarts(_LRScheduler):
         gamma(float): Decrease rate of max learning rate by cycle. Default: 1.
         last_epoch (int): The index of last epoch. Default: -1.
     """
-    
+
     def __init__(self,
                  optimizer : torch.optim.Optimizer,
                  first_cycle_steps : int,
@@ -55,7 +55,7 @@ class CustomCosineAnnealingWarmupRestarts(_LRScheduler):
                  last_epoch : int = -1
         ):
         assert warmup_steps < first_cycle_steps
-        
+
         self.first_cycle_steps = first_cycle_steps # first cycle step size
         self.cycle_mult = cycle_mult # cycle steps magnification
         self.base_max_lr = max_lr # first max learning rate
@@ -63,22 +63,22 @@ class CustomCosineAnnealingWarmupRestarts(_LRScheduler):
         self.min_lr = min_lr # min learning rate
         self.warmup_steps = warmup_steps # warmup step size
         self.gamma = gamma # decrease rate of max learning rate by cycle
-        
+
         self.cur_cycle_steps = first_cycle_steps # first cycle step size
         self.cycle = 0 # cycle count
         self.step_in_cycle = last_epoch # step size of the current cycle
-        
+
         super(CustomCosineAnnealingWarmupRestarts, self).__init__(optimizer, last_epoch)
-        
+
         # set learning rate min_lr
         self.init_lr()
-    
+
     def init_lr(self):
         self.base_lrs = []
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = self.min_lr
             self.base_lrs.append(self.min_lr)
-    
+
     def get_lr(self):
         if self.step_in_cycle == -1:
             return self.base_lrs
@@ -111,7 +111,7 @@ class CustomCosineAnnealingWarmupRestarts(_LRScheduler):
             else:
                 self.cur_cycle_steps = self.first_cycle_steps
                 self.step_in_cycle = epoch
-                
+
         self.max_lr = self.base_max_lr * (self.gamma**self.cycle)
         self.last_epoch = math.floor(epoch)
         for param_group, lr in zip(self.optimizer.param_groups, self.get_lr()):
