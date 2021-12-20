@@ -5,14 +5,7 @@ from pytorch_lightning.utilities import rank_zero_only
 
 import torch
 import math
-import yaml
-from easydict import EasyDict
 
-
-def load_setting(setting):
-    with open(setting, 'r') as f:
-        cfg = yaml.load(f, Loader=yaml.FullLoader)
-    return EasyDict(cfg)
 
 class CustomTensorBoardLogger(TensorBoardLogger):
     def __init__(self, *args, **kwargs):
