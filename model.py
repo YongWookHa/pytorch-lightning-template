@@ -4,9 +4,10 @@ import pytorch_lightning as pl
 import utils
 
 class Model(pl.LightningModule):
-    def __init__(self, cfg):
+    def __init__(self, hparams):
         super(Model, self).__init__()
-        self.cfg = cfg
+        self.hparams = hparams
+        self.save_hyperparameters()
 
         """ Define Layers """
         self.net = torch.nn.Identity()
@@ -22,21 +23,21 @@ class Model(pl.LightningModule):
         return out
 
     def configure_optimizers(self):
-        optimizer = getattr(torch.optim, self.cfg.optimizer)
-        optimizer = optimizer(self.parameters(), lr=self.cfg.lr)
+        optimizer = getattr(torch.optim, self.hparams.optimizer)
+        optimizer = optimizer(self.parameters(), lr=self.hparams.lr)
 
-        if not self.cfg.scheduler:
+        if not self.hparams.scheduler:
             return optimizer
-        elif hasattr(torch.optim.lr_scheduler, self.cfg.scheduler):
-            scheduler = getattr(torch.optim.lr_scheduler, self.cfg.scheduler)
-        elif hasattr(utils, self.cfg.scheduler):
-            scheduler = getattr(utils, self.cfg.scheduler)
+        elif hasattr(torch.optim.lr_scheduler, self.hparams.scheduler):
+            scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler)
+        elif hasattr(utils, self.hparams.scheduler):
+            scheduler = getattr(utils, self.hparams.scheduler)
         else:
             raise ModuleNotFoundError
 
         scheduler = {
-            'scheduler': scheduler(optimizer, **self.cfg.scheduler_param),
-            'interval': self.cfg.scheduler_interval,
+            'scheduler': scheduler(optimizer, **self.hparams.scheduler_param),
+            'interval': self.hparams.scheduler_interval,
             'name': "learning_rate"
             }
         return [optimizer], [scheduler]
