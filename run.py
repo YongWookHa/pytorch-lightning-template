@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # setting
     hparams = load_hparams_from_yaml(args.setting)
-    hparams = update_hparams(hparams, dict(args))
+    update_hparams(hparams, vars(args))
     print("setting:", hparams)
 
     train_set = DataModule(hparams.train_data_path)
